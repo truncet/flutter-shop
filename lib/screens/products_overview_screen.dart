@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/product.dart';
 
+import '../widgets/product_item.dart';
+
 class ProductOverrideScreen extends StatelessWidget {
   final List<Product> loadedProducts = [
     Product(
@@ -51,7 +53,12 @@ class ProductOverrideScreen extends StatelessWidget {
             crossAxisSpacing: 20,
             mainAxisSpacing: 10,
           ),
-          itemBuilder: (xtx, i) => Container(),
+          itemBuilder: (xtx, i) => ProductItem(
+            loadedProducts[i].id,
+            loadedProducts[i].title,
+            loadedProducts[i].imageUrl,
+            loadedProducts[i].price,
+          ),
           padding: EdgeInsets.all(10),
           itemCount: loadedProducts.length,
         ));
