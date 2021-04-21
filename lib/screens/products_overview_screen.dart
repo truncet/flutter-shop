@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../widgets/products_grid.dart';
 import '../providers/cart.dart';
 import '../widgets/badge.dart';
+import '../widgets/app_drawer.dart';
 import '../screens/cart_screen.dart';
 
 enum FilterOptions {
@@ -12,6 +13,7 @@ enum FilterOptions {
 }
 
 class ProductOverrideScreen extends StatefulWidget {
+  static const routeName = '/productoverview';
   @override
   _ProductOverrideScreenState createState() => _ProductOverrideScreenState();
 }
@@ -60,6 +62,7 @@ class _ProductOverrideScreenState extends State<ProductOverrideScreen> {
           )
         ],
       ),
+      drawer: AppDrawer(),
       body: ProductGrid(_showFavorites),
     );
   }
