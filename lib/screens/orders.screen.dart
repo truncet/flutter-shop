@@ -5,32 +5,11 @@ import '../widgets/app_drawer.dart';
 import '../providers/orders.dart';
 import '../widgets/order_item.dart' as ord;
 
-class OrderScreen extends StatefulWidget {
-  static const routeName = '/orderscreen';
-
-  @override
-  _OrderScreenState createState() => _OrderScreenState();
-}
-
-class _OrderScreenState extends State<OrderScreen> {
-  bool _isLoading = false;
-  @override
-  void initState() {
-    setState(() {
-      _isLoading = true;
-    });
-    Future.delayed(Duration.zero).then((_) async {
-      await Provider.of<Order>(context, listen: false).fetchAndSetOrders();
-      setState(() {
-        _isLoading = false;
-      });
-    });
-    super.initState();
-  }
-
+class OrderScreen extends StatelessWidget {
+  static const routeName = 'order-screen';
   @override
   Widget build(BuildContext context) {
-    final orderData = Provider.of<Order>(context);
+    //final orderData = Provider.of<Order>(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -38,16 +17,31 @@ class _OrderScreenState extends State<OrderScreen> {
         ),
       ),
       drawer: AppDrawer(),
-      body: _isLoading
-          ? CircularProgressIndicator()
-          : ListView.builder(
-              itemBuilder: (ctx, index) {
-                return ord.OrderItem(
-                  orderData.orders[index],
-                );
-              },
-              itemCount: orderData.orders.length,
-            ),
+      body: FutureBuilder(
+        future: Provider.of<Order>(context, listen: false).fetchAndSetOrders(),
+        builder: (ctx, dataSnapshot) {
+          if (dataSnapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (dataSnapshot.error != null) {
+            return Center(
+              child: Text('There is an error'),
+            );
+          } else {
+            return Consumer<Order>(
+              builder: (ctx, orderData, child) => ListView.builder(
+                itemBuilder: (ctx, index) {
+                  return ord.OrderItem(
+                    orderData.orders[index],
+                  );
+                },
+                itemCount: orderData.orders.length,
+              ),
+            );
+          }
+        },
+      ),
     );
   }
 }
