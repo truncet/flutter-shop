@@ -26,9 +26,16 @@ class Order with ChangeNotifier {
     return [..._orders];
   }
 
+  String token;
+
+  void update(String tok, Order ord) {
+    token = tok;
+    _orders = ord == null ? [] : ord._orders;
+  }
+
   Future<void> fetchAndSetOrders() async {
     final url = Uri.parse(
-        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/orders.json');
+        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/orders.json?auth=$token');
     final response = await http.get(url);
     final List<OrderItem> loadedOrders = [];
     final extractedData = json.decode(response.body) as Map<String, dynamic>;

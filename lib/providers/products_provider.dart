@@ -59,9 +59,17 @@ class Products with ChangeNotifier {
   //   _showFavorites = false;
   //   notifyListeners();
   // }
+  String token;
+  Products();
 
   Product findById(String id) {
     return _items.firstWhere((element) => element.id == id);
+  }
+
+  void update(String tok, Products product) {
+    token = tok;
+    _items = product == null ? [] : product._items;
+    notifyListeners();
   }
 
   Future<void> addNewProducts(Product product) {
@@ -139,26 +147,30 @@ class Products with ChangeNotifier {
 
   Future<void> fetchAndGetResults() async {
     final url = Uri.parse(
-        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/products.json');
-    final response = await http.get(url);
-    final extractedData = json.decode(response.body) as Map<String, dynamic>;
-    final List<Product> loadedProducts = [];
-    if (extractedData != null && extractedData.isNotEmpty)
-      extractedData.forEach(
-        (prodId, prodData) {
-          loadedProducts.add(
-            Product(
-              id: prodId,
-              title: prodData['title'],
-              description: prodData['description'],
-              price: prodData['price'],
-              imageUrl: prodData['imageUrl'],
-              isFavorite: prodData['isFavorite'],
-            ),
-          );
-        },
-      );
-    _items = loadedProducts;
-    notifyListeners();
+        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/products.json?auth=$token');
+    try {
+      final response = await http.get(url);
+      final extractedData = json.decode(response.body) as Map<String, dynamic>;
+      final List<Product> loadedProducts = [];
+      if (extractedData != null && extractedData.isNotEmpty)
+        extractedData.forEach(
+          (prodId, prodData) {
+            loadedProducts.add(
+              Product(
+                id: prodId,
+                title: prodData['title'],
+                description: prodData['description'],
+                price: prodData['price'],
+                imageUrl: prodData['imageUrl'],
+                isFavorite: prodData['isFavorite'],
+              ),
+            );
+          },
+        );
+      _items = loadedProducts;
+      notifyListeners();
+    } catch (error) {
+      print(error);
+    }
   }
 }
