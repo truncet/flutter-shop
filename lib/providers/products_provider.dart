@@ -60,21 +60,23 @@ class Products with ChangeNotifier {
   //   notifyListeners();
   // }
   String token;
+  String userId;
   Products();
 
   Product findById(String id) {
     return _items.firstWhere((element) => element.id == id);
   }
 
-  void update(String tok, Products product) {
+  void update(String tok, String uid, Products product) {
     token = tok;
     _items = product == null ? [] : product._items;
+    userId = uid;
     notifyListeners();
   }
 
   Future<void> addNewProducts(Product product) {
     final url = Uri.parse(
-        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/products.json');
+        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/products.json?auth=$token');
 
     return http
         .post(
@@ -85,7 +87,7 @@ class Products with ChangeNotifier {
           'description': product.description,
           'imageUrl': product.imageUrl,
           'price': product.price,
-          'isFavorite': product.isFavorite,
+          'creatorId': userId,
         },
       ),
     )
@@ -111,7 +113,7 @@ class Products with ChangeNotifier {
     var productIndex = _items.indexWhere((element) => element.id == id);
     if (productIndex >= 0) {
       final url = Uri.parse(
-          'https://flutter-project-f57eb-default-rtdb.firebaseio.com/products/$id.json');
+          'https://flutter-project-f57eb-default-rtdb.firebaseio.com/products/$id.json?auth=$token');
       await http.patch(
         url,
         body: json.encode(
@@ -131,7 +133,7 @@ class Products with ChangeNotifier {
 
   void deleteProducts(String id) async {
     final url = Uri.parse(
-        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/products/$id.json');
+        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/products/$id.json?auth=$token');
     final productIndex = _items.indexWhere((element) => element.id == id);
     var existingProduct = _items[productIndex];
     _items.removeAt(productIndex);
@@ -145,28 +147,38 @@ class Products with ChangeNotifier {
     existingProduct = null;
   }
 
-  Future<void> fetchAndGetResults() async {
+  Future<void> fetchAndGetResults([bool filterByUser = false]) async {
+    final filterByString =
+        filterByUser ? 'orderBy="creatorId"&equalTo="$userId"' : '';
     final url = Uri.parse(
-        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/products.json?auth=$token');
+        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/products.json?auth=$token&$filterByString');
     try {
       final response = await http.get(url);
       final extractedData = json.decode(response.body) as Map<String, dynamic>;
       final List<Product> loadedProducts = [];
-      if (extractedData != null && extractedData.isNotEmpty)
-        extractedData.forEach(
-          (prodId, prodData) {
-            loadedProducts.add(
-              Product(
-                id: prodId,
-                title: prodData['title'],
-                description: prodData['description'],
-                price: prodData['price'],
-                imageUrl: prodData['imageUrl'],
-                isFavorite: prodData['isFavorite'],
-              ),
-            );
-          },
-        );
+      if (extractedData == null) {
+        return;
+      }
+
+      final favUrl = Uri.parse(
+          'https://flutter-project-f57eb-default-rtdb.firebaseio.com/userfavorites/$userId.json?auth=$token');
+
+      final favResponse = await http.get(favUrl);
+      final favData = json.decode(favResponse.body);
+      extractedData.forEach(
+        (prodId, prodData) {
+          loadedProducts.add(
+            Product(
+              id: prodId,
+              title: prodData['title'],
+              description: prodData['description'],
+              price: prodData['price'],
+              imageUrl: prodData['imageUrl'],
+              isFavorite: favData == null ? false : favData[prodId] ?? false,
+            ),
+          );
+        },
+      );
       _items = loadedProducts;
       notifyListeners();
     } catch (error) {

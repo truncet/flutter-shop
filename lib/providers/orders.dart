@@ -27,15 +27,17 @@ class Order with ChangeNotifier {
   }
 
   String token;
+  String userId;
 
-  void update(String tok, Order ord) {
+  void update(String tok, String uid, Order ord) {
     token = tok;
+    userId = uid;
     _orders = ord == null ? [] : ord._orders;
   }
 
   Future<void> fetchAndSetOrders() async {
     final url = Uri.parse(
-        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/orders.json?auth=$token');
+        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/orders/$userId.json?auth=$token');
     final response = await http.get(url);
     final List<OrderItem> loadedOrders = [];
     final extractedData = json.decode(response.body) as Map<String, dynamic>;
@@ -67,7 +69,7 @@ class Order with ChangeNotifier {
 
   Future<void> addOrder(List<CartItem> cartProducts, double total) async {
     final url = Uri.parse(
-        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/orders.json');
+        'https://flutter-project-f57eb-default-rtdb.firebaseio.com/orders/$userId.json?auth=$token');
 
     final dateTime = DateTime.now();
     final response = await http.post(
